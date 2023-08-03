@@ -1,0 +1,52 @@
+import numpy as np
+
+def kalman_filter(pos_measurement, dt, q_pos, q_vel, r_pos):
+ 
+    x_est = np.array([pos_measurement[0], 0])   #starea sistemului, prima coordonata-pozitia, a doua-viteza
+
+  
+    P = np.eye(2)   #matricea de covarianta a starii - luam 1 ca sa fie incertitudine ridicata
+
+   
+    F = np.array([[1, dt],
+                  [0, 1]]) #matricea de tranzitie a starii sistemului
+
+    
+    Q = np.array([[q_pos, 0],
+                  [0, q_vel]]) #matricea de covarianta a pozitiei si vitezzei
+
+
+    H = np.array([[1, 0]]) # matricea de observare - adica modific doar pozitia, presupun ca merg cu viteza constanta
+
+    
+    R = np.array([[r_pos]]) #covarianta pozitiei
+
+    estimated_states = [x_est[0]]  #aici stocam pozitiile estimate
+
+    for measurement in pos_measurement[1:]:
+        # predictie
+        x_pred = F.dot(x_est)
+        P_pred = F.dot(P).dot(F.T) + Q
+
+        # update
+        y_k = measurement - H.dot(x_pred)
+        S_k = H.dot(P_pred).dot(H.T) + R
+        K = P_pred.dot(H.T).dot(np.linalg.inv(S_k))
+        x_est = x_pred + K.dot(y_k)
+        P = (np.eye(2) - K.dot(H)).dot(P_pred)
+
+        estimated_states.append(x_est[0])  # adaugam in lista pozitia estimata
+
+    return estimated_states
+
+
+pos_measurement = [0, 5, 12, 20, 28]
+dt = 1
+q_pos = 0.1  
+q_vel = 0.01  
+r_pos = 1.0  
+
+estimated_positions = kalman_filter(pos_measurement, dt, q_pos, q_vel, r_pos)
+print(estimated_positions)
+
+
